@@ -15,20 +15,22 @@ type JBODY map[string]interface{}
 //GetContact test handler
 func GetContact(db *sql.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusOK, ModelGet(db))
+		var contact Contact
+		return c.JSON(http.StatusOK, contact.Read(db))
 	}
 }
 
 //PutContact test handler
 func PutContact(db *sql.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		var contact Contact
+		//получаем номер контракта из контекста
 		id, _ := strconv.Atoi(c.Param("id"))
 
-		var contact Contact
 		// привязываем пришедший JSON к новому контакту
 		c.Bind(&contact)
 
-		id, err := ModelPutContact(db, contact)
+		id, err := contact.Create(db)
 
 		if err == nil {
 			return c.JSON(http.StatusOK, JBODY{
@@ -45,9 +47,11 @@ func PutContact(db *sql.DB) echo.HandlerFunc {
 //DelContact test handler
 func DelContact(db *sql.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		var contact Contact
+
 		id, _ := strconv.Atoi(c.Param("id"))
 
-		_, err := ModelDelContact(db, id)
+		_, err := contact.Delete(db, id)
 
 		if err == nil {
 			return c.JSON(http.StatusOK, JBODY{

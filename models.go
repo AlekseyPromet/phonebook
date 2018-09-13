@@ -20,11 +20,11 @@ type AllContacts struct {
 	Contacts []Contact `json:"contacts"`
 }
 
-//ModelGet func
-func ModelGet(db *sql.DB) []string {
-	selectGetContact := `SELET * FROM phonebook WHERE id=1;`
+//Read contact func
+func (c Contact) Read(db *sql.DB) []string {
+	selectContact := `SELET * FROM phonebook WHERE id=1;`
 
-	contactRow, err := db.Query(selectGetContact)
+	contactRow, err := db.Query(selectContact)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,12 +37,44 @@ func ModelGet(db *sql.DB) []string {
 	return contact
 }
 
-//ModelPutContact func
-func ModelPutContact(db *sql.DB, contact Contact) (int, error) {
+//Create contact func
+func (c Contact) Create(db *sql.DB) (int, error) {
 	return 0, nil
 }
 
-//ModelDelContact func
-func ModelDelContact(db *sql.DB, id int) (int, error) {
+//Delete contact func
+func (c Contact) Delete(db *sql.DB, id int) (int, error) {
 	return 0, nil
+}
+
+//ReadAll select all rows in phonebook
+func (contacts AllContacts) ReadAll(db *sql.DB) AllContacts {
+	selectAllCont := `SELECT * FROM phonebook;`
+	contactRows, err := db.Query(selectAllCont)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer contactRows.Close()
+
+	for contactRows.Next() {
+		var cont Contact
+
+		errCont := contactRows.Scan(
+			&cont.ID,
+			&cont.Firstname,
+			&cont.Secondname,
+			&cont.Sinonim,
+			&cont.Prefix,
+			&cont.Number,
+		)
+
+		if errCont != nil {
+			log.Printf("Не удалось прочитать контакт, ошибка %v \n", errCont)
+		}
+
+		contacts.Contacts = append(contacts.Contacts, cont)
+	}
+
+	return contacts
 }
