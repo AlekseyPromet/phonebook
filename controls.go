@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -14,7 +15,7 @@ type JBODY map[string]interface{}
 //GetContact test handler
 func GetContact(db *sql.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusOK, ModelContact(db))
+		return c.JSON(http.StatusOK, ModelGet(db))
 	}
 }
 
@@ -22,9 +23,22 @@ func GetContact(db *sql.DB) echo.HandlerFunc {
 func PutContact(db *sql.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, _ := strconv.Atoi(c.Param("id"))
-		return c.JSON(http.StatusOK, JBODY{
-			"Контакт обновлён №": id,
-		})
+
+		var contact Contact
+		// привязываем пришедший JSON к новому контакту
+		c.Bind(&contact)
+
+		id, err := ModelPutContact(db, contact)
+
+		if err == nil {
+			return c.JSON(http.StatusOK, JBODY{
+				"Контакт обновлён №": id,
+			})
+		}
+		//Обработка ошибок
+		log.Fatal(err)
+
+		return err
 	}
 }
 
@@ -32,8 +46,17 @@ func PutContact(db *sql.DB) echo.HandlerFunc {
 func DelContact(db *sql.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, _ := strconv.Atoi(c.Param("id"))
-		return c.JSON(http.StatusOK, JBODY{
-			"Контакт удалён №": id,
-		})
+
+		_, err := ModelDelContact(db, id)
+
+		if err == nil {
+			return c.JSON(http.StatusOK, JBODY{
+				"Контакт удалён №": id,
+			})
+		}
+		//Обработка ошибок
+		log.Fatal(err)
+
+		return err
 	}
 }

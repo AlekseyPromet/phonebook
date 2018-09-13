@@ -54,7 +54,7 @@ func migrate(db *sql.DB) {
 			id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 			firstname VARCHAR NOT NULL,
 			secondname VARCHAR,
-			psevdonime VARCHAR,
+			sinonim VARCHAR,
 			prefix VARCHAR,
 			phone INTEGER
 		);
