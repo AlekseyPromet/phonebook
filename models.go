@@ -15,41 +15,99 @@ type Contact struct {
 	Number     int    `json:"number"`
 }
 
-//AllContacts in phonebook
-type AllContacts struct {
+//Contacts in phonebook
+type Contacts struct {
 	Contacts []Contact `json:"contacts"`
 }
 
-//Read contact func
-func (c Contact) Read(db *sql.DB) []string {
-	selectContact := `SELET * FROM phonebook WHERE id=1;`
+//ReadNumber contact func
+func (contacts Contacts) ReadNumber(db *sql.DB, id int) Contacts {
+	selectContact := `SELET * FROM phonebook WHERE number LIKE ?% `
 
-	contactRow, err := db.Query(selectContact)
+	sql, err := db.Prepare(selectContact)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer contactRow.Close()
+	defer sql.Close()
 
-	contact, err := contactRow.Columns()
-	if err != nil {
-		log.Fatal(err)
+	contactRows, errRead := sql.Query(id)
+	if errRead != nil {
+		log.Println(errRead)
 	}
-	return contact
+
+	for contactRows.Next() {
+		var cont Contact
+
+		errCont := contactRows.Scan(
+			&cont.ID,
+			&cont.Firstname,
+			&cont.Secondname,
+			&cont.Sinonim,
+			&cont.Prefix,
+			&cont.Number,
+		)
+
+		if errCont != nil {
+			log.Printf("Не удалось прочитать контакт, ошибка %v \n", errCont)
+		}
+
+		contacts.Contacts = append(contacts.Contacts, cont)
+	}
+
+	return contacts
 }
 
 //Create contact func
-func (c Contact) Create(db *sql.DB) (int, error) {
-	return 0, nil
+func (cont Contact) Create(db *sql.DB) (int64, error) {
+	createCont := `INSERT INTO phonebook
+								VALUES(?, ?, ?, ?, ?, ?)`
+
+	sql, err := db.Prepare(createCont)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer sql.Close()
+
+	result, errCre := sql.Exec(
+		cont.ID,
+		cont.Firstname,
+		cont.Secondname,
+		cont.Sinonim,
+		cont.Prefix,
+		cont.Number,
+	)
+
+	if errCre != nil {
+		log.Fatal(err)
+	}
+
+	return result.LastInsertId()
 }
 
 //Delete contact func
-func (c Contact) Delete(db *sql.DB, id int) (int, error) {
-	return 0, nil
+func (cont Contact) Delete(db *sql.DB, id int) (int64, error) {
+	delCont := "DELETE FROM tasks WHERE id = ?"
+
+	// выполним SQL запрос
+	sql, err := db.Prepare(delCont)
+	// выход при ошибке
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// заменим символ '?' в запросе на 'id'
+	result, errDel := sql.Exec(id)
+	// выход при ошибке
+	if errDel != nil {
+		log.Fatal(errDel)
+	}
+
+	return result.RowsAffected()
 }
 
 //ReadAll select all rows in phonebook
-func (contacts AllContacts) ReadAll(db *sql.DB) AllContacts {
-	selectAllCont := `SELECT * FROM phonebook;`
+func (contacts Contacts) ReadAll(db *sql.DB) Contacts {
+	selectAllCont := `SELECT * FROM phonebook`
 	contactRows, err := db.Query(selectAllCont)
 	if err != nil {
 		log.Fatal(err)
