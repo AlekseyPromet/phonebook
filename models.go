@@ -8,7 +8,7 @@ import (
 //Contact in phonebook
 type Contact struct {
 	ID         int    `json:"id"`
-	Firstname  string `json:"fistname"`
+	Firstname  string `json:"firstname"`
 	Secondname string `json:"secondname"`
 	Sinonim    string `json:"sinonim"`
 	Prefix     string `json:"prefix"`
@@ -21,8 +21,28 @@ type Contacts struct {
 	Contacts []Contact `json:"contacts"`
 }
 
+//Migrate миграция базы данных, создание таблиц
+func Migrate(db *sql.DB) {
+	create := `
+		CREATE TABLE IF NOT EXISTS phonebook(
+			id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+			firstname VARCHAR NOT NULL,
+			secondname VARCHAR,
+			sinonim VARCHAR,
+			prefix VARCHAR,
+			phone INTEGER,
+			note VARCHAR
+		);
+	`
+	_, err := db.Exec(create)
+	if err != nil {
+		log.Fatalf("Не удалось создать таблицу phonebook\n %v", err)
+	}
+}
+
 //ReadNumber contact func
-func (contacts Contacts) ReadNumber(db *sql.DB, id int) Contacts {
+func ReadNumber(db *sql.DB, id int) Contacts {
+	var contacts Contacts
 	selectContact := `SELET * FROM phonebook WHERE number LIKE ?% `
 
 	sql, err := db.Prepare(selectContact)
@@ -60,7 +80,8 @@ func (contacts Contacts) ReadNumber(db *sql.DB, id int) Contacts {
 }
 
 //Create contact func
-func (cont Contact) Create(db *sql.DB) (int64, error) {
+func Create(db *sql.DB) (int64, error) {
+	var contact Contact
 	createCont := `INSERT INTO phonebook
 								VALUES(?, ?, ?, ?, ?, ?)`
 
@@ -71,13 +92,13 @@ func (cont Contact) Create(db *sql.DB) (int64, error) {
 	defer sql.Close()
 
 	result, errCre := sql.Exec(
-		cont.ID,
-		cont.Firstname,
-		cont.Secondname,
-		cont.Sinonim,
-		cont.Prefix,
-		cont.Number,
-		cont.Note,
+		contact.ID,
+		contact.Firstname,
+		contact.Secondname,
+		contact.Sinonim,
+		contact.Prefix,
+		contact.Number,
+		contact.Note,
 	)
 
 	if errCre != nil {
@@ -88,7 +109,7 @@ func (cont Contact) Create(db *sql.DB) (int64, error) {
 }
 
 //Delete contact func
-func (cont Contact) Delete(db *sql.DB, id int) (int64, error) {
+func Delete(db *sql.DB, id int) (int64, error) {
 	delCont := "DELETE FROM tasks WHERE id = ?"
 
 	// выполним SQL запрос
@@ -109,7 +130,8 @@ func (cont Contact) Delete(db *sql.DB, id int) (int64, error) {
 }
 
 //ReadAll select all rows in phonebook
-func (contacts Contacts) ReadAll(db *sql.DB) Contacts {
+func ReadAll(db *sql.DB) Contacts {
+	var contacts Contacts
 	selectAllCont := `SELECT * FROM phonebook`
 	contactRows, err := db.Query(selectAllCont)
 	if err != nil {
@@ -119,23 +141,23 @@ func (contacts Contacts) ReadAll(db *sql.DB) Contacts {
 	defer contactRows.Close()
 
 	for contactRows.Next() {
-		var cont Contact
+		var newContact Contact
 
 		errCont := contactRows.Scan(
-			&cont.ID,
-			&cont.Firstname,
-			&cont.Secondname,
-			&cont.Sinonim,
-			&cont.Prefix,
-			&cont.Number,
-			&cont.Note,
+			&newContact.ID,
+			&newContact.Firstname,
+			&newContact.Secondname,
+			&newContact.Sinonim,
+			&newContact.Prefix,
+			&newContact.Number,
+			&newContact.Note,
 		)
 
 		if errCont != nil {
 			log.Printf("Не удалось прочитать контакт, ошибка %v \n", errCont)
 		}
 
-		contacts.Contacts = append(contacts.Contacts, cont)
+		contacts.Contacts = append(contacts.Contacts, newContact)
 	}
 
 	return contacts
