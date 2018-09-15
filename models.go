@@ -10,9 +10,10 @@ type Contact struct {
 	ID         int    `json:"id"`
 	Firstname  string `json:"fistname"`
 	Secondname string `json:"secondname"`
-	Sinonim    string `json:"sininime"`
+	Sinonim    string `json:"sinonim"`
 	Prefix     string `json:"prefix"`
 	Number     int    `json:"number"`
+	Note       string `json:"note"`
 }
 
 //Contacts in phonebook
@@ -45,6 +46,7 @@ func (contacts Contacts) ReadNumber(db *sql.DB, id int) Contacts {
 			&cont.Sinonim,
 			&cont.Prefix,
 			&cont.Number,
+			&cont.Note,
 		)
 
 		if errCont != nil {
@@ -75,6 +77,7 @@ func (cont Contact) Create(db *sql.DB) (int64, error) {
 		cont.Sinonim,
 		cont.Prefix,
 		cont.Number,
+		cont.Note,
 	)
 
 	if errCre != nil {
@@ -125,6 +128,7 @@ func (contacts Contacts) ReadAll(db *sql.DB) Contacts {
 			&cont.Sinonim,
 			&cont.Prefix,
 			&cont.Number,
+			&cont.Note,
 		)
 
 		if errCont != nil {

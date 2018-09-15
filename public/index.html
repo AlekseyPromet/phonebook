@@ -1,0 +1,155 @@
+<!-- public/index.html -->
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>ТКнига</title>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Font Awesome -->
+  <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"> -->
+  <!-- JQuery -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script> -->
+  <!-- Latest compiled and minified JavaScript -->
+  <!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script> -->
+  <!-- Vue.js -->
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/1.0.24/vue.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.7.0/vue-resource.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Телефонная книга</h2>
+    <!-- Поиск -->
+    <div class="row">
+      <div class="col xl6 l6 m8 s10 input-field">
+        <i class="material-icons prefix circle">search</i>
+        <input type="text" name="search" id="auto-input" class="search">
+      </div>
+    </div>
+    <!-- Список контактов -->
+    <div class="row">
+      <div class="col xl6 l6 m6 s6">
+        <ul class="collection">
+          <li class="collection-item" v-for="contact in phonebook">
+            {{ contact.id }}
+            <span class="right-align">
+              <button class="btn-floating red" v-on:click="deleteContact($index)">
+                <i class="material-icons circle" aria-hidden="true">delete</i>
+              </button>
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="col xl6 l6 m6 s6 ">
+      <h6>Создать новый контакт</h6>
+      <div class="row">
+        <div class="input-field col xl4 l4 m5 s6">
+          <input type="text" id="fn" class="validate" placeholder="Имя" v-model="newContact.firstname">
+          <label for="fn">Имя</label>
+        </div>
+        <div class="input-field col xl4 l4 m5 s6">
+          <input type="text" id="sn" class="validate" placeholder="Фамилия" v-model="newContact.secondname">
+          <label for="sn">Фамилия</label>
+        </div>
+        <div class="input-field col xl4 l4 m5 s6">
+          <input type="text" id="si" class="validate" placeholder="Синоним" v-model="newContact.sinonim">
+          <label for="si">Синоним</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col xl1 l1 m1 s1">
+          <select id="pf" v-model="newContact.prefix">
+            <option value="" disabled selected>+7</option>
+            <option value="1">+1</option>
+            <option value="2">+2</option>
+            <option value="3">+3</option>
+            <option value="4">+4</option>
+            <option value="5">+5</option>
+            <option value="6">+6</option>
+            <option value="7">+7</option>
+            <option value="8">+8</option>
+            <option value="9">+9</option>
+          </select>
+          <label for="pf">Страна</label>
+        </div>
+        <div class="input-field col xl3 l4 m4 s4">
+          <input type="text" id="nb" class="validate" placeholder="Номер" v-model="newContact.number">
+          <label for="nb">Номер</label>
+        </div>
+        <div class="input-field col xl8 l7 m7 s7">
+          <input type="text" id="nt" class="validate" placeholder="Заметки" v-model="newContact.note">
+          <label for="nt">Заметки</label>
+        </div>
+        <button class="btn-floating green waves-effect waves-light" type="button" v-on:click="createContact">
+          <i class="material-icons circle">add</i>
+        </button>
+      </div>
+      <!-- /input -->
+    </div>
+    <script>
+      new Vue({
+        el: 'body',
+        data: { phonebook: [], newContact: {} },
+        // запускаем при загрузке страницы,
+        // чтобы у нас был актуальный список всех контактов phonebook
+        function() {
+          // используем $http-клиента из vue-resource для получения данных от роута /phonebook
+          this.$http.get('/phonebook').then(function (response) {
+            this.phonebook = response.data.items ? response.data.items : []
+          }).error(
+            function (error) {
+              console.log(error)
+            })
+          console.log("Контакты загружены")
+        },
+        methods: {
+          createContact: function () {
+            if (!$.trim(this.newContact.firstname)) {
+              this.newContact = {}
+              return
+            }
+            // передаём новую задачу роуту /phonebook с помощью $http клиента
+            this.$http.put('/phonebook', this.newContact).success(function (response) {
+              this.newContact.id = response.created
+              this.phonebook.push(this.newContact)
+              console.log("Контакт создан!")
+              console.log(this.newContact)
+              this.newContact = {}
+            }).error(
+              function (error) {
+                console.log(error)
+              });
+          },
+          deleteContact: function (index) {
+            // используем $http клиента для удаления контакта по id
+            this.$http.delete('/phonebook/' + this.phonebook[index].id).success(function (response) {
+              this.phonebook.splice(index, 1)
+              console.log("Контакт удалён")
+            }).error(
+              function (error) {
+                console.log(error)
+              })
+          },
+        }
+      });
+      document.addEventListener('DOMContentLoaded', function () {
+        var search = document.querySelectorAll('.search');
+        var iSearch = M.Autocomplete.init(search, options);
+
+        var oPrefix = {
+          'Россия': '+7',
+          '+2': '',
+          '+3': ''
+        }
+        var sPrefix = document.querySelectorAll('select');
+        var iPrefix = M.FormSelect.init(sPrefix, oPrefix);
+      });
+    </script>
+</body>
+
+</html>

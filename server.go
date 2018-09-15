@@ -10,21 +10,19 @@ import (
 
 var db *sql.DB
 
-func init() {
-	//Инициализация базы данных
-	db := initDB("./db/storagserver.db")
-	migrate(db)
-	defer db.Close()
-}
-
 func main() {
 	//Создание приложения
 	server := echo.New()
 	server.HidePort = false
 
+	//Инициализация базы данных
+	db := initDB("./db/storagserver.db")
+	migrate(db)
+	defer db.Close()
+
 	server.File("/", "public/index.html")
 
-	server.GET("/phonebook", GetContact(db))
+	server.GET("/phonebook", GetContacts(db))
 
 	server.PUT("/phonebook", PutContact(db))
 
