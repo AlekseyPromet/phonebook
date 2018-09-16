@@ -9,12 +9,8 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <!-- Compiled and minified JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  <!-- Font Awesome -->
-  <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"> -->
   <!-- JQuery -->
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script> -->
-  <!-- Latest compiled and minified JavaScript -->
-  <!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
   <!-- Vue.js -->
   <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/1.0.24/vue.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.7.0/vue-resource.min.js"></script>
@@ -33,9 +29,19 @@
     <!-- Список контактов -->
     <div class="row">
       <div class="col xl6 l6 m6 s6">
-        <ul class="collection">
-          <li class="collection-item" v-for="contact in phonebook">
-            {{ contact.id }}
+        <ul class="list-group">
+          <li class="list-group-item" v-for="contact in contacts">
+            <div class="card">
+              <div class="col xl2 l3 s6 m10">
+                <div class="card-content">
+                  <span class="car-title">{{contact.firstname}} {{contact.secondname}}</span>
+                  <p>{{ contact.sinonim }} {{ contact.prefix}}{{ contact.number}}</p>
+                  <div class="card-action">
+                    <p>{{contact.note}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
             <span class="right-align">
               <button class="btn-floating red" v-on:click="deleteContact($index)">
                 <i class="material-icons circle" aria-hidden="true">delete</i>
@@ -62,9 +68,10 @@
         </div>
       </div>
       <div class="row">
-        <div class="input-field col xl1 l1 m1 s1">
-          <select id="pf" v-model="newContact.prefix">
+        <div class="col xl1 l1 m2 s2">
+          <select class="browser-default" id="pf" v-model="newContact.prefix">
             <option value="" disabled selected>+7</option>
+            <option value="0">0</option>
             <option value="1">+1</option>
             <option value="2">+2</option>
             <option value="3">+3</option>
@@ -75,17 +82,16 @@
             <option value="8">+8</option>
             <option value="9">+9</option>
           </select>
-          <label for="pf">Страна</label>
         </div>
-        <div class="input-field col xl3 l4 m4 s4">
+        <div class="input-field col xl3 l4 m10 s10">
           <input type="text" id="nb" class="validate" placeholder="Номер" v-model="newContact.number">
           <label for="nb">Номер</label>
         </div>
-        <div class="input-field col xl8 l7 m7 s7">
+        <div class="input-field col xl8 l7 m10 s12">
           <input type="text" id="nt" class="validate" placeholder="Заметки" v-model="newContact.note">
           <label for="nt">Заметки</label>
         </div>
-        <button class="btn-floating green waves-effect waves-light" type="button" v-on:click="createContact">
+        <button class="btn-floating green waves-effect waves-light right" type="button" v-on:click="createContact">
           <i class="material-icons circle">add</i>
         </button>
       </div>
@@ -94,13 +100,16 @@
     <script>
       new Vue({
         el: 'body',
-        data: { phonebook: [], newContact: {} },
+        data: {
+          contacts: [],
+          newContact: {}
+        },
         // запускаем при загрузке страницы,
-        // чтобы у нас был актуальный список всех контактов phonebook
-        function() {
-          // используем $http-клиента из vue-resource для получения данных от роута /phonebook
-          this.$http.get('/phonebook').then(function (response) {
-            this.phonebook = response.data.items ? response.data.items : []
+        // чтобы у нас был актуальный список всех контактов contacts
+        created: function () {
+          // используем $http-клиента из vue-resource для получения данных от роута /contacts
+          this.$http.get('/contacts').then(function (response) {
+            this.contacts = response.data.items ? response.data.items : []
           }).error(
             function (error) {
               console.log(error)
@@ -113,10 +122,15 @@
               this.newContact = {}
               return
             }
-            // передаём новую задачу роуту /phonebook с помощью $http клиента
-            this.$http.put('/phonebook', this.newContact).success(function (response) {
-              this.newContact.id = response.created
-              this.phonebook.push(this.newContact)
+            // передаём новую задачу роуту /contacts с помощью $http клиента
+            this.$http.put('/contacts', this.newContact).success(function (response) {
+              this.newContact.firstname = response.created
+              this.newContact.lastname = response.created
+              this.newContact.sinonim = response.created
+              this.newContact.prefix = response.created
+              this.newContact.number = response.created
+              this.newContact.note = response.created
+              this.contacts.push(this.newContact)
               console.log("Контакт создан!")
               console.log(this.newContact)
               this.newContact = {}
@@ -127,8 +141,8 @@
           },
           deleteContact: function (index) {
             // используем $http клиента для удаления контакта по id
-            this.$http.delete('/phonebook/' + this.phonebook[index].id).success(function (response) {
-              this.phonebook.splice(index, 1)
+            this.$http.delete('/contacts/' + this.contacts[index].id).success(function (response) {
+              this.contacts.splice(index, 1)
               console.log("Контакт удалён")
             }).error(
               function (error) {
@@ -137,17 +151,10 @@
           },
         }
       });
-      document.addEventListener('DOMContentLoaded', function () {
-        var search = document.querySelectorAll('.search');
-        var iSearch = M.Autocomplete.init(search, options);
-
-        var oPrefix = {
-          'Россия': '+7',
-          '+2': '',
-          '+3': ''
-        }
-        var sPrefix = document.querySelectorAll('select');
-        var iPrefix = M.FormSelect.init(sPrefix, oPrefix);
+    </script>
+    <script>
+      $(document).ready(function () {
+        $('select').formSelect();
       });
     </script>
 </body>
