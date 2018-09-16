@@ -14,7 +14,8 @@ import (
 var DB *sql.DB
 
 const (
-	connect = "root:pass@/storage"
+	// заменить данные пользователь:пароль
+	connect = "root:pass@/phonebookdb"
 	driver  = "mysql"
 )
 
@@ -33,22 +34,20 @@ func initDB(driver, connect string) *sql.DB {
 
 //Migrate миграция базы данных, создание таблиц
 func migrate(db *sql.DB) {
-	createdb := `CREATE DATEBASE IF NOT EXISTS phonebookdb;`
-	usedb := `USE phonebookdb;`
-	createtabl := ` CREATE TABLE	phonebook	(
-			ID INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-			Firstname VARCHAR(20),
-			Secondname VARCHAR(40),
-			Sinonim VARCHAR(20),
-			Prefix VARCHAR(3),
-			Number INT,
-			Note VARCHAR(120)
+	usedb := `use phonebookdb;`
+	createtabl := ` create table phonebookdb.phonebook	(
+			id int primary key auto_increment not null,
+			firstname varchar(20),
+			secondname varchar(40),
+			sinonim varchar(20),
+			prefix varchar(3),
+			number int,
+			note varchar(120)
 		);
 	`
-	_, err := db.Exec(createdb)
-	_, err = db.Exec(usedb)
+	_, err := db.Exec(usedb)
 	_, err = db.Exec(createtabl)
-	result, err := db.Exec("INSERT INTO phonebook (Firstname, Secondname, Sinonim, Prefix, Number, Note )VALUES ('Тест','товый', 'пользователь', '+7', '987654321', 'Заметка')")
+	result, err := db.Exec("insert into phonebookdb.phonebook (Firstname, Secondname, Sinonim, Prefix, Number, Note ) values ('Тест','товый', 'пользователь', '+7', '987654321', 'Заметка')")
 
 	if err != nil {
 		log.Fatalf("Не удалось создать таблицу phonebook\n %v", err)
@@ -62,8 +61,8 @@ func migrate(db *sql.DB) {
 
 func init() {
 	//Инициализация базы данных
-	DB := initDB(driver, connect)
-	migrate(DB)
+	db := initDB(driver, connect)
+	migrate(db)
 }
 
 func main() {
