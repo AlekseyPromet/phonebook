@@ -7,7 +7,7 @@
                      
 2. Установить MySQL или MariaDB
 3. Создать БД
-            mysql -u root -p
+            $ mysql -u root -p
             MariaDB [(none)]> create database phonebookdb;
 4. В main.go заменить данные пользователь:пароль
 	                          connect = "root:pass@/phonebookdb" 
