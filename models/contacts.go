@@ -23,7 +23,7 @@ type Contacts struct {
 
 //GetAllContacts select all rows in phonebook
 func GetAllContacts(db *sql.DB) Contacts {
-	selectAllCont := `SELECT * FROM phonebook;`
+	selectAllCont := `select * from phonebookdb.phonebook;`
 	fmt.Println("\n Выполняем запрос к БД")
 	contactRows, err := db.Query(selectAllCont)
 
@@ -62,7 +62,7 @@ func GetAllContacts(db *sql.DB) Contacts {
 //GetContactByID contact func
 func GetContactByID(db *sql.DB, id int) Contact {
 	var cont = Contact{}
-	selectContact := `SELET * FROM phonebook WHERE ID = ?`
+	selectContact := `select * from phonebookdb.phonebook where id = ?`
 	//вычисляем выражение sql
 	stmt, err := db.Prepare(selectContact)
 	if err != nil {
@@ -92,8 +92,8 @@ func GetContactByID(db *sql.DB, id int) Contact {
 //PutContact contact func
 func PutContact(db *sql.DB, cont *Contact) (int64, error) {
 	insertCont := `
-	INSERT INTO phonebook (Firstname, Secondname, Sinonim, Prefix, Number, Note)
-	 VALUES( $1, $2, $3, $4, $5, $6);
+	insert into phonebookdb.phonebook (Firstname, Secondname, Sinonim, Prefix, Number, Note)
+	 values( $1, $2, $3, $4, $5, $6);
 	 `
 	//записываем результат в модель
 	row, errExec := db.Exec(
@@ -118,7 +118,7 @@ func PutContact(db *sql.DB, cont *Contact) (int64, error) {
 
 //Delete contact func
 func Delete(db *sql.DB, id int) (int64, error) {
-	delCont := "DELETE FROM phonebook WHERE id = ?"
+	delCont := "delet from phonebookdb.phonebook where id = ?"
 
 	// выполним SQL запрос
 	sql, err := db.Prepare(delCont)
