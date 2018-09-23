@@ -8,11 +8,11 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <!-- Compiled and minified JavaScript -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <!-- JQuery -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
   <!-- Vue.js -->
   <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/1.0.24/vue.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.7.0/vue-resource.min.js"></script>
 </head>
 
@@ -21,56 +21,32 @@
     <h2>Телефонная книга</h2>
     <!-- Поиск -->
     <div class="row">
-      <div class="col xl6 l6 m8 s10 input-field">
-        <i class="material-icons prefix circle">search</i>
-        <input type="text" name="search" id="auto-input" class="search">
+      <div class="col xl3 l3 m3 s3 input-field">
+        <input type="text" name="search" id="auto-input" class="search" v-on:keyup.enter="search">
+        <button class="btn-floating blue waves-effect waves-light right" v-on:click="search">
+          <i class="material-icons circle">search</i>
+        </button>
       </div>
     </div>
-    <!-- Список контактов -->
-    <div class="row">
-      <div class="col xl6 l6 m6 s6">
-        <ul class="list-group">
-          <li class="list-group-item" v-for="contact in contacts">
-            <div class="card">
-              <div class="col xl2 l3 s6 m10">
-                <div class="card-content">
-                  <span class="car-title">{{contact.firstname}} {{contact.secondname}}</span>
-                  <p>{{ contact.sinonim }} {{ contact.prefix}}{{ contact.number}}</p>
-                  <div class="card-action">
-                    <p>{{contact.note}}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <span class="right-align">
-              <button class="btn-floating red" v-on:click="deleteContact($index)">
-                <i class="material-icons circle" aria-hidden="true">delete</i>
-              </button>
-            </span>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <div class="col xl6 l6 m6 s6 ">
-      <h6>Создать новый контакт</h6>
+    <!-- Форма нового контакта -->
+    <form action="/newcontact">
       <div class="row">
-        <div class="input-field col xl4 l4 m5 s6">
-          <input type="text" id="fn" class="validate" placeholder="Имя" v-model="newContact.firstname">
+        <h6>Создать новый контакт</h6>
+        <div class="input-field col xl3 l3 m4 s4">
+          <input type="text" id="fn" placeholder="Имя" v-model="newContact.firstname">
           <label for="fn">Имя</label>
         </div>
-        <div class="input-field col xl4 l4 m5 s6">
-          <input type="text" id="sn" class="validate" placeholder="Фамилия" v-model="newContact.secondname">
+        <div class="input-field col xl3 l3 m4 s4">
+          <input type="text" id="sn" placeholder="Фамилия" v-model="newContact.secondname">
           <label for="sn">Фамилия</label>
         </div>
-        <div class="input-field col xl4 l4 m5 s6">
-          <input type="text" id="si" class="validate" placeholder="Синоним" v-model="newContact.sinonim">
+        <div class="input-field col xl2 l2 m3 s3">
+          <input type="text" id="si" placeholder="Синоним" v-model="newContact.sinonim">
           <label for="si">Синоним</label>
         </div>
-      </div>
-      <div class="row">
-        <div class="col xl1 l1 m2 s2">
+        <div class="col xl1 l1 m1 s1">
           <select class="browser-default" id="pf" v-model="newContact.prefix">
-            <option value="" disabled selected>+7</option>
+            <option value="7" disabled selected>+7</option>
             <option value="0">0</option>
             <option value="1">+1</option>
             <option value="2">+2</option>
@@ -83,80 +59,53 @@
             <option value="9">+9</option>
           </select>
         </div>
-        <div class="input-field col xl3 l4 m10 s10">
+        <div class="input-field col">
           <input type="text" id="nb" class="validate" placeholder="Номер" v-model="newContact.number">
           <label for="nb">Номер</label>
         </div>
-        <div class="input-field col xl8 l7 m10 s12">
-          <input type="text" id="nt" class="validate" placeholder="Заметки" v-model="newContact.note">
-          <label for="nt">Заметки</label>
+        <div class="col xl1 l1 m1 s12">
+          <label for="ac">Активен
+            <input type="radio" checked="checked" id="ac" v-model="newContact.active">
+          </label>
         </div>
         <button class="btn-floating green waves-effect waves-light right" type="button" v-on:click="createContact">
           <i class="material-icons circle">add</i>
         </button>
       </div>
-      <!-- /input -->
-    </div>
-    <script>
-      new Vue({
-        el: 'body',
-        data: {
-          contacts: [],
-          newContact: {}
-        },
-        // запускаем при загрузке страницы,
-        // чтобы у нас был актуальный список всех контактов contacts
-        created: function () {
-          // используем $http-клиента из vue-resource для получения данных от роута /contacts
-          this.$http.get('/contacts').then(function (response) {
-            this.contacts = response.data.items ? response.data.items : []
-          }).error(
-            function (error) {
-              console.log(error)
-            })
-          console.log("Контакты загружены")
-        },
-        methods: {
-          createContact: function () {
-            if (!$.trim(this.newContact.firstname)) {
-              this.newContact = {}
-              return
-            }
-            // передаём новую задачу роуту /contacts с помощью $http клиента
-            this.$http.put('/contacts', this.newContact).success(function (response) {
-              this.newContact.firstname = response.created
-              this.newContact.lastname = response.created
-              this.newContact.sinonim = response.created
-              this.newContact.prefix = response.created
-              this.newContact.number = response.created
-              this.newContact.note = response.created
-              this.contacts.push(this.newContact)
-              console.log("Контакт создан!")
-              console.log(this.newContact)
-              this.newContact = {}
-            }).error(
-              function (error) {
-                console.log(error)
-              });
-          },
-          deleteContact: function (index) {
-            // используем $http клиента для удаления контакта по id
-            this.$http.delete('/contacts/' + this.contacts[index].id).success(function (response) {
-              this.contacts.splice(index, 1)
-              console.log("Контакт удалён")
-            }).error(
-              function (error) {
-                console.log(error)
-              })
-          },
-        }
-      });
-    </script>
-    <script>
-      $(document).ready(function () {
-        $('select').formSelect();
-      });
-    </script>
+  </div>
+  </form>
+  <!-- /form -->
+  <!-- Список контактов -->
+  <div class="col xl9 l9 m9 s9">
+    <ul class="list-group">
+      <li class="list-group-item" v-for="contact in contacts">
+        <div class="card row">
+          <div class="col xl2 l3 s6 m10">
+            <div class="card-content">
+              <p class="car-title">{{contact.firstname}} {{contact.secondname}}</p>
+              <p>{{ contact.sinonim }} </p>
+              <div class="card-action">
+                <p>{{ contact.prefix }}{{ contact.number }}</p>
+                <span>{{ contact.active }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="right-align">
+          <button class="btn-floating red" v-on:click="deleteContact($index)">
+            <i class="material-icons circle" aria-hidden="true">delete</i>
+          </button>
+        </span>
+      </li>
+    </ul>
+  </div>
+  <script src="static/scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function () {
+      $('select').formSelect();
+    });
+  </script>
 </body>
 
 </html>
