@@ -22,15 +22,17 @@ type JBODY map[string]interface{}
 func GetContacts(db *sql.DB) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		fmt.Println(db.Ping())
-		return ctx.JSON(http.StatusOK, models.SelectAll(db))
+		results := models.SelectAll(db)
+		return ctx.JSON(http.StatusOK, results)
 	}
 }
 
 //GetContact handler
 func GetContact(db *sql.DB) echo.HandlerFunc {
-	var findeNumber = make(chan []int, 10)
-	var numbers []int
+
 	return func(ctx echo.Context) error {
+		var findeNumber = make(chan []int, 10)
+		var numbers []int
 		fmt.Println(db.Ping())
 		number, err := strconv.Atoi(ctx.Param("number"))
 		if err != nil {
@@ -46,25 +48,26 @@ func GetContact(db *sql.DB) echo.HandlerFunc {
 	}
 }
 
-func GetNumbers() {
-
-}
-
 //PutContact handler
 func PutContact(db *sql.DB) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		// создаём пустой контакт
-		var contact = models.Contact{}
+		var (
+			contact = models.Contact{}
+			err     error
+		)
+		if contact.ID == nil {
+			contact.ID = 0
+		}
 		// привязываем пришедший JSON к новому контакту
-		ctx.Bind(&contact)
+		err = ctx.Bind(&contact)
 
-		id, err := strconv.Atoi(ctx.Param("id"))
 		if err != nil {
 			//Обработка ошибок
 			ctx.Logger().Error(err)
 		}
 
-		id64, errDB := models.Update(db, &contact, id)
+		id64, errDB := models.CreateNewContact(db, &contact)
 		if errDB != nil {
 			return ctx.JSON(http.StatusOK, JBODY{
 				"Контакт не обновлён №": id64,

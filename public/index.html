@@ -5,47 +5,42 @@
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <title>ТКнига</title>
   <!-- Compiled and minified CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <!-- Compiled and minified JavaScript -->
-  <!-- JQuery -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <link rel="stylesheet" href="/public/materialize.css">
+  <!-- <link rel="stylesheet" href="/public/fonts.css"> -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <!-- Vue.js -->
-  <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/1.0.24/vue.min.js"></script>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.7.0/vue-resource.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
 </head>
 
 <body>
   <div class="container">
     <h2>Телефонная книга</h2>
     <!-- Поиск -->
-    <div class="row">
-      <div class="col xl3 l3 m3 s3 input-field">
-        <input type="text" name="search" id="auto-input" class="search" v-on:keyup.enter="search">
-        <button class="btn-floating blue waves-effect waves-light right" v-on:click="search">
-          <i class="material-icons circle">search</i>
-        </button>
+    <div class="row" id="app1">
+      <div class="col xl3 l3 m3 s3 input-field" v-bind:title="searchMessage">
+        <label for="search"><i class="material-icons circle">search</i></label>
+        <input id="search" type="text" minlength="5" maxlength="10" placeholder="9876543210" class="search" required
+          v-binde.value="searchNumber" v-on:input="searchNumber = $event.target.value">
       </div>
     </div>
     <!-- Форма нового контакта -->
-    <form action="/newcontact">
+    <form action="/newсontact" id="app3">
       <div class="row">
         <h6>Создать новый контакт</h6>
         <div class="input-field col xl3 l3 m4 s4">
-          <input type="text" id="fn" placeholder="Имя" v-model="newContact.firstname">
+          <input type="text" id="fn" placeholder="Имя" v-model.trim="newContact.firstname">
           <label for="fn">Имя</label>
         </div>
         <div class="input-field col xl3 l3 m4 s4">
-          <input type="text" id="sn" placeholder="Фамилия" v-model="newContact.secondname">
+          <input type="text" id="sn" placeholder="Фамилия" v-model.trim="newContact.secondname">
           <label for="sn">Фамилия</label>
         </div>
         <div class="input-field col xl2 l2 m3 s3">
-          <input type="text" id="si" placeholder="Синоним" v-model="newContact.sinonim">
+          <input type="text" id="si" placeholder="Синоним" v-model.trim="newContact.sinonim">
           <label for="si">Синоним</label>
         </div>
         <div class="col xl1 l1 m1 s1">
-          <select class="browser-default" id="pf" v-model="newContact.prefix">
+          <select class="browser-default" id="pf" v-model.trim="newContact.prefix">
             <option value="7" disabled selected>+7</option>
             <option value="0">0</option>
             <option value="1">+1</option>
@@ -60,52 +55,68 @@
           </select>
         </div>
         <div class="input-field col">
-          <input type="text" id="nb" class="validate" placeholder="Номер" v-model="newContact.number">
+          <input type="text" id="nb" class="validate" type="text" minlength="5" maxlength="10" placeholder="9876543210"
+            v-model.number="newContact.number">
           <label for="nb">Номер</label>
         </div>
         <div class="col xl1 l1 m1 s12">
-          <label for="ac">Активен
-            <input type="radio" checked="checked" id="ac" v-model="newContact.active">
-          </label>
+          <input type="checkbox" checked="checked" id="ac" v-model="newContact.active">
+          <label for="ac">Активен</label>
         </div>
         <button class="btn-floating green waves-effect waves-light right" type="button" v-on:click="createContact">
           <i class="material-icons circle">add</i>
         </button>
       </div>
+    </form>
   </div>
-  </form>
-  <!-- /form -->
+
+  <!-- Конец формы для нового контакта-->
   <!-- Список контактов -->
-  <div class="col xl9 l9 m9 s9">
-    <ul class="list-group">
-      <li class="list-group-item" v-for="contact in contacts">
-        <div class="card row">
-          <div class="col xl2 l3 s6 m10">
-            <div class="card-content">
-              <p class="car-title">{{contact.firstname}} {{contact.secondname}}</p>
-              <p>{{ contact.sinonim }} </p>
-              <div class="card-action">
-                <p>{{ contact.prefix }}{{ contact.number }}</p>
-                <span>{{ contact.active }}</span>
+  <div class="container" id="app2">
+    <div class="row" v-if="isLoading">
+      <div class="col xl12 l12 s12 m12">
+        <ul class="list-group">
+          <li class="list-group-item" v-for="(contact, index) in contacts" :key="contact.id">
+            <!-- карточка -->
+            <div class="card row">
+              <div class="col">
+                <div class="card-content">
+                  <span>{{ index+1 }}</span>
+                  <h5 class="car-title">Имя: {{contact.firstname}} {{contact.secondname}}</h5>
+                  <h5>Телефон: {{ contact.prefix }}{{ contact.number }}</h5>
+                  <div class="card-action">
+                    <div>Псевдоним: {{ contact.sinonim }} </div>
+                    <div>Активный: {{ contact.active }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="right-align">
+                <button class="btn-floating red" v-on:click="deleteContact(index)">
+                  <i class="material-icons circle" aria-hidden="true">delete</i>
+                </button>
               </div>
             </div>
-          </div>
-        </div>
-        <span class="right-align">
-          <button class="btn-floating red" v-on:click="deleteContact($index)">
-            <i class="material-icons circle" aria-hidden="true">delete</i>
-          </button>
-        </span>
-      </li>
-    </ul>
+            <!-- карточка -->
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row" v-else>
+      <div class="col">Загрузка контактов...</div>
+    </div>
   </div>
-  <script src="static/scripts.js"></script>
+  <!-- Конец списока контактов -->
+  <!-- Compiled and minified JavaScript -->
+  <script type="text/javascript" src="/public/axios.js"></script>
+  <script type="text/javascript" src="/public/scripts.js"></script>
+  <!-- JQuery -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
   <script type="text/javascript">
     $(document).ready(function () {
       $('select').formSelect();
     });
-  </script>
+  </script> -->
 </body>
 
 </html>

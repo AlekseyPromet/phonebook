@@ -35,12 +35,10 @@ func SelectAll(db *sql.DB) Contacts {
 	rows, err := db.Query(selectAllCont)
 
 	if err == nil {
-		fmt.Printf("Запрос выполнен: %v \n", selectAllCont)
+		fmt.Printf("Запрос выполнен: %s \n", selectAllCont)
 	}
-	fmt.Printf("%v", rows)
 
 	result := Contacts{}
-
 	//цикл по полученным строкам
 	for rows.Next() {
 		newContact := Contact{}
@@ -64,6 +62,7 @@ func SelectAll(db *sql.DB) Contacts {
 	}
 	defer rows.Close()
 	//Возвращаем коллекцию контактов
+	log.Println(result)
 	return result
 }
 
@@ -93,11 +92,10 @@ func SelectAllNumbers(db *sql.DB, findeNumber chan []int, number int) ([]int, bo
 	return numbers, true
 }
 
-//Update contact func
-func Update(db *sql.DB, cont *Contact, id int) (int64, error) {
-	updateCont := `update phonebook
-	set  firstname=?, seconsname=?, sinonim=?, prefix=?, number=?, active=?
-	where number = ?`
+//CreateNewContact contact func
+func CreateNewContact(db *sql.DB, cont *Contact) (int64, error) {
+	updateCont := `insert phonebook
+	set  firstname=?, seconsname=?, sinonim=?, prefix=?, number=?, active=?`
 
 	stmt, err := db.Prepare(updateCont)
 
@@ -107,15 +105,15 @@ func Update(db *sql.DB, cont *Contact, id int) (int64, error) {
 		cont.Sinonim,
 		cont.Prefix,
 		cont.Number,
-		cont.Active,
-		id)
+		cont.Active)
 	//обработка ошибок
+	id64, err := row.LastInsertId()
 	if err != nil {
-		fmt.Printf("Не удалось обновить контак id=%v. Ошибки: %v \n", id, err)
+		fmt.Printf("Не удалось обновить контак id=%v. Ошибки: %v \n", id64, err)
 	}
 	defer stmt.Close()
 	//возврящаем id записи
-	return row.LastInsertId()
+	return id64, err
 }
 
 //Insert contact func

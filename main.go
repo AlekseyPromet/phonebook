@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"phonebook/controls"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -62,7 +63,8 @@ func migrate(db *sql.DB) {
 	db.Exec(usedb)
 	_, err = db.Exec(createTablePhonebook)
 	_, err = db.Exec(createTableChat)
-	result, err := db.Exec("insert into phonebook (firstname, secondname, sinonim, prefix, number, active ) values ('Тестовый','пользо', 'ватель', '+7', '987654321', 'true')")
+
+	result, err := testContact(db)
 
 	if err != nil {
 		log.Fatalf("Не удалось создать таблицу phonebook\n %v", err)
@@ -80,24 +82,26 @@ func main() {
 	migrate(db)
 	//Создание приложения
 	server := echo.New()
+	server.Debug = true
 
 	server.Use(middleware.Logger())
 	server.Use(middleware.Recover())
 	server.Use(middleware.CORSWithConfig(
 		middleware.CORSConfig{
 			AllowOrigins: []string{"*"},
-			AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
+			AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE, echo.HeaderUpgrade},
 		}))
 
 	//serve rout for phonebook
 	server.File("/", "public/index.html")
+	server.Static("/public", "public/static")
 	server.GET("/contacts", controls.GetContacts(db))
 	server.GET("/finde", controls.GetContact(db))
 	server.PUT("/newсontact", controls.PutContact(db))
 	server.POST("/contacts/:id", controls.PostContact(db))
 	server.DELETE("/delсontact/:id", controls.DelContact(db))
 	//serve rout for chat
-	server.GET("/chatws", controls.ChatHandler())
+	server.GET("/search/:number", controls.SearchHandl)
 
 	//Запуск сервера с логированием
 	fmt.Println("Успешно: север запущен")
@@ -106,4 +110,16 @@ func main() {
 	//Остановка сервера
 	defer server.Close()
 	defer db.Close()
+}
+
+//test contact create and write to DB
+func testContact(db *sql.DB) (sql.Result, error) {
+	numberRnd := rand.Int63n(876543210) + int64(9000000000)
+	result, err := db.Exec(`insert into phonebook
+												 (firstname, secondname, sinonim, prefix, number, active )
+													values ('Тестовый','пользо', 'ватель', '+7', ?, true)`, numberRnd)
+	if err != nil {
+		log.Println("Не удалось созадать запись в бд.")
+	}
+	return result, err
 }
