@@ -18,9 +18,12 @@
     <!-- Поиск -->
     <div class="row" id="app1">
       <div class="col xl3 l3 m3 s3 input-field" v-bind:title="searchMessage">
-        <label for="search"><i class="material-icons circle">search</i></label>
-        <input id="search" type="text" minlength="5" maxlength="10" placeholder="9876543210" class="search" required
-          v-binde.value="searchNumber" v-on:input="searchNumber = $event.target.value">
+        <label for="sr"><i class="material-icons circle">search</i></label>
+        <input id="sr" type="text" minlength="5" maxlength="10" placeholder="9876543210" class="search" v-model.trim="searchNumber"
+          v-on:keyup.enter="search($event)">
+      </div>
+      <div class="col" v-if="isSearch">
+        <textarea id="al" cols="3" rows="30">{{ allNumbers }}</textarea>
       </div>
     </div>
     <!-- Форма нового контакта -->

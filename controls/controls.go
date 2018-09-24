@@ -31,34 +31,33 @@ func GetContacts(db *sql.DB) echo.HandlerFunc {
 func GetContact(db *sql.DB) echo.HandlerFunc {
 
 	return func(ctx echo.Context) error {
-		var findeNumber = make(chan []int, 10)
-		var numbers []int
+		var (
+			contact models.Contact
+			err     error
+		)
+
 		fmt.Println(db.Ping())
+		prefix := ctx.Param("prefix")
 		number, err := strconv.Atoi(ctx.Param("number"))
+		contact, err = models.SelectContact(db, number, prefix)
+
 		if err != nil {
 			ctx.Logger().Error(err)
 		}
-		go models.SelectAllNumbers(db, findeNumber, number)
-		numbers = <-findeNumber
-		for n := range numbers {
-			fmt.Print(n)
-		}
-		fmt.Println()
-		return ctx.JSON(http.StatusOK, numbers)
+
+		return ctx.JSON(http.StatusOK, contact)
 	}
 }
 
-//PutContact handler
-func PutContact(db *sql.DB) echo.HandlerFunc {
+//UpdateContact handler
+func UpdateContact(db *sql.DB) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		// создаём пустой контакт
 		var (
 			contact = models.Contact{}
 			err     error
 		)
-		if contact.ID == nil {
-			contact.ID = 0
-		}
+
 		// привязываем пришедший JSON к новому контакту
 		err = ctx.Bind(&contact)
 
@@ -67,7 +66,7 @@ func PutContact(db *sql.DB) echo.HandlerFunc {
 			ctx.Logger().Error(err)
 		}
 
-		id64, errDB := models.CreateNewContact(db, &contact)
+		id64, errDB := models.UpdateContact(db, &contact)
 		if errDB != nil {
 			return ctx.JSON(http.StatusOK, JBODY{
 				"Контакт не обновлён №": id64,
@@ -80,8 +79,8 @@ func PutContact(db *sql.DB) echo.HandlerFunc {
 	}
 }
 
-//PostContact handler
-func PostContact(db *sql.DB) echo.HandlerFunc {
+//CreateContact handler
+func CreateContact(db *sql.DB) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		// создаём пустой контакт
 		var contact = models.Contact{}
@@ -89,7 +88,7 @@ func PostContact(db *sql.DB) echo.HandlerFunc {
 		ctx.Bind(&contact)
 
 		//передаём в модель указатель на контакт
-		id64, err := models.Insert(db, &contact)
+		id64, err := models.InsertContact(db, &contact)
 		if err != nil {
 			//Обработка ошибок
 			log.Println(err)
@@ -105,8 +104,8 @@ func PostContact(db *sql.DB) echo.HandlerFunc {
 	}
 }
 
-//DelContact handler
-func DelContact(db *sql.DB) echo.HandlerFunc {
+//DeleteContact handler
+func DeleteContact(db *sql.DB) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		id, _ := strconv.Atoi(ctx.Param("id"))
 		_, err := models.DeleteByID(db, id)

@@ -15,10 +15,11 @@ import (
 
 //DB database driver
 var (
-	db *sql.DB
+	DB *sql.DB
 )
 
 const (
+	host = "localhost:8080"
 	// заменить данные пользователь:пароль
 	connect     = "root:pass@/phonebookdb"
 	connect2tcp = "root:pass@tcp(server_ip:port)/phonebookdb"
@@ -27,15 +28,15 @@ const (
 
 //InitDB подключение к базе данных
 func initDB(driver, connect string) *sql.DB {
-	db, err := sql.Open(driver, connect)
+	DB, err := sql.Open(driver, connect)
 
-	if err != nil || db == nil {
+	if err != nil || DB == nil {
 		log.Fatalf("Ошибка %v,\n при инициализации базы данных: %v", err)
 	} else {
 		log.Printf("Подключение к базе данных. '%v'\n", driver)
 	}
 
-	return db
+	return DB
 }
 
 //Migrate миграция базы данных, создание таблиц
@@ -53,16 +54,8 @@ func migrate(db *sql.DB) {
 			active bool
 		) engine=innodb auto_icrement=1 default charset=utf8mb4;
 	`
-	createTableChat := `create table chat(
-			id int primary key auto_incrimant not nul,
-			email varchar(40) not null,
-			message varchar(128)
-			) engine=innodb auto_icrement=1 default charset=utf8mb4;
-		`
-
 	db.Exec(usedb)
 	_, err = db.Exec(createTablePhonebook)
-	_, err = db.Exec(createTableChat)
 
 	result, err := testContact(db)
 
@@ -97,15 +90,15 @@ func main() {
 	server.Static("/public", "public/static")
 	server.GET("/contacts", controls.GetContacts(db))
 	server.GET("/finde", controls.GetContact(db))
-	server.PUT("/newсontact", controls.PutContact(db))
-	server.POST("/contacts/:id", controls.PostContact(db))
-	server.DELETE("/delсontact/:id", controls.DelContact(db))
-	//serve rout for chat
-	server.GET("/search/:number", controls.SearchHandl)
+	server.PUT("/newсontact", controls.UpdateContact(db))
+	server.POST("/contacts/:id", controls.CreateContact(db))
+	server.DELETE("/delсontact/:id", controls.DeleteContact(db))
+	//serve rout for websocket search
+	server.GET("/search", controls.Search)
 
 	//Запуск сервера с логированием
 	fmt.Println("Успешно: север запущен")
-	go server.Logger.Fatal(server.Start(":8080"))
+	go server.Logger.Fatal(server.Start(host))
 
 	//Остановка сервера
 	defer server.Close()
@@ -114,7 +107,9 @@ func main() {
 
 //test contact create and write to DB
 func testContact(db *sql.DB) (sql.Result, error) {
-	numberRnd := rand.Int63n(876543210) + int64(9000000000)
+
+	numberRnd := rand.Int63n(98765432) + int64(9000000000)
+
 	result, err := db.Exec(`insert into phonebook
 												 (firstname, secondname, sinonim, prefix, number, active )
 													values ('Тестовый','пользо', 'ватель', '+7', ?, true)`, numberRnd)

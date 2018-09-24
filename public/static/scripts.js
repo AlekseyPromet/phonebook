@@ -1,24 +1,47 @@
+var loc = window.location;
+var uri = 'ws://localhost:8080/search';
+var ws = new WebSocket(uri);
+
 var v1 = new Vue({
   el: '#app1',
   data: {
     searchMessage:
       'Начните набирать номер телефона безы +7, например 987654321',
-    numbers: [],
+    allNumbers: [],
     searchNumber: '',
+    isSearch: false,
+  },
+  created() {
+    ws.onopen = function(v1) {
+      console.log('Подключаемся к вёбсокету');
+    };
+  },
+  mounted() {
+    console.log(uri);
+  },
+  destroyed() {
+    ws.onclose = function() {
+      if (ws.wasClean) {
+        alert('Соединение закрыто чисто');
+      } else {
+        // например, "убит" процесс сервера
+        alert('Обрыв соединения');
+      }
+      alert('Код: ' + ws.code + ' причина: ' + ws.reason);
+    };
   },
   methods: {
-    search: function(value) {
-      this.searchNum = toString(value)
-        .split('-')
-        .join('');
-      return axios
-        .get('/search/' + this.searchNum)
-        .then(response => {
-          this.numbers = response.data.number ? response.data.number : [];
-        })
-        .catch(error => {
-          console.log('Ошибка при запросе номеров');
-        });
+    search: function() {
+      console.log('Отправляем данные на сервер');
+      setInterval(function() {
+        ws.send(this.searchNumber);
+      }, 10000);
+      ws.onmessage = function() {
+        console.log('Ответ от сервера', ws.data);
+        this.allNumbers += ws.data;
+        console.log(v1.allNumbers);
+        this.isSearch = true;
+      };
     },
   },
 });
@@ -96,12 +119,12 @@ var v3 = new Vue({
       } else {
         axios
           .put('/newсontact', v3.newContact)
-          .then(response => {
-            this.newContact.id = response.created;
+          .then(function(response) {
+            this.newContact.id = response.created.id;
             this.contacts.push(v3.newContact);
             console.log('Контакт создан!');
           })
-          .catch(error => {
+          .catch(function(error) {
             console.log('Ошибка создания нового контакта');
           });
       }

@@ -39,6 +39,7 @@ func SelectAll(db *sql.DB) Contacts {
 	}
 
 	result := Contacts{}
+
 	//цикл по полученным строкам
 	for rows.Next() {
 		newContact := Contact{}
@@ -50,7 +51,8 @@ func SelectAll(db *sql.DB) Contacts {
 			&newContact.Sinonim,
 			&newContact.Prefix,
 			&newContact.Number,
-			&newContact.Active)
+			&newContact.Active,
+		)
 		//обработка ошибок
 		if err != nil {
 			fmt.Printf("Не удалось прочитать контакты, ошибка %v \n", err)
@@ -59,6 +61,7 @@ func SelectAll(db *sql.DB) Contacts {
 		}
 		//добавляем полученный контакт в коллекцию
 		result.Contacts = append(result.Contacts, newContact)
+
 	}
 	defer rows.Close()
 	//Возвращаем коллекцию контактов
@@ -67,7 +70,7 @@ func SelectAll(db *sql.DB) Contacts {
 }
 
 //SelectAllNumbers contact func
-func SelectAllNumbers(db *sql.DB, findeNumber chan []int, number int) ([]int, bool) {
+func SelectAllNumbers(db *sql.DB, findeNumber chan []int) ([]int, error) {
 	var (
 		num     int
 		numbers []int
@@ -78,7 +81,7 @@ func SelectAllNumbers(db *sql.DB, findeNumber chan []int, number int) ([]int, bo
 	rows, err := stmt.Query()
 	if err != nil {
 		log.Println(err)
-		return nil, false
+		return numbers, err
 	}
 
 	for rows.Next() {
@@ -88,38 +91,37 @@ func SelectAllNumbers(db *sql.DB, findeNumber chan []int, number int) ([]int, bo
 	}
 
 	defer stmt.Close()
-	//возвращаем true
-	return numbers, true
+	//возвращаем err
+	return numbers, err
 }
 
-//CreateNewContact contact func
-func CreateNewContact(db *sql.DB, cont *Contact) (int64, error) {
-	updateCont := `insert phonebook
-	set  firstname=?, seconsname=?, sinonim=?, prefix=?, number=?, active=?`
+//SelectContact for search one contact
+func SelectContact(db *sql.DB, number int, prefix string) (Contact, error) {
+	var selContact Contact
 
-	stmt, err := db.Prepare(updateCont)
+	rowContact := db.QueryRow(`
+	 select * from phonebook
+	 where Number like = ?
+	 and Prefix like = ?
+	`, number, prefix)
 
-	row, err := stmt.Exec(
-		cont.Firstname,
-		cont.Secondname,
-		cont.Sinonim,
-		cont.Prefix,
-		cont.Number,
-		cont.Active)
-	//обработка ошибок
-	id64, err := row.LastInsertId()
-	if err != nil {
-		fmt.Printf("Не удалось обновить контак id=%v. Ошибки: %v \n", id64, err)
-	}
-	defer stmt.Close()
-	//возврящаем id записи
-	return id64, err
+	err := rowContact.Scan(
+		&selContact.ID,
+		&selContact.Firstname,
+		&selContact.Secondname,
+		&selContact.Sinonim,
+		&selContact.Prefix,
+		&selContact.Number,
+		&selContact.Active,
+	)
+
+	return selContact, err
 }
 
-//Insert contact func
-func Insert(db *sql.DB, cont *Contact) (int64, error) {
+//InsertContact contact func
+func InsertContact(db *sql.DB, cont *Contact) (int64, error) {
 	insertCont := `
-	insert into phonebookdb.phonebook (Firstname, Secondname, Sinonim, Prefix, Number, Active)
+	insert into phonebook (Firstname, Secondname, Sinonim, Prefix, Number, Active)
 	 values( ?, ?, ?, ?, ?, true);
 	 `
 	//записываем результат в модель
@@ -159,4 +161,25 @@ func DeleteByID(db *sql.DB, id int) (int64, error) {
 	}
 	//возврящаем id записи
 	return result.RowsAffected()
+}
+
+//UpdateContact func
+func UpdateContact(db *sql.DB, cont *Contact) (int64, error) {
+	updateCont := `update phonebook set firstname=?, secondname=?, sinonim=?, prefix=?, number=?, active=?`
+
+	stmt, err := db.Prepare(updateCont)
+	result, err := stmt.Exec(
+		cont.Firstname,
+		cont.Secondname,
+		cont.Sinonim,
+		cont.Prefix,
+		cont.Number,
+		cont.Active,
+	)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return result.LastInsertId()
 }
