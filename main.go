@@ -19,8 +19,9 @@ var (
 )
 
 const (
+	// заменить данные
 	host = "localhost:8080"
-	// заменить данные пользователь:пароль
+	//пользователь:пароль
 	connect     = "root:pass@/phonebookdb"
 	connect2tcp = "root:pass@tcp(server_ip:port)/phonebookdb"
 	driver      = "mysql"
@@ -52,7 +53,9 @@ func migrate(db *sql.DB) {
 			prefix varchar(3),
 			number int not null,
 			active bool
-		) engine=innodb auto_icrement=1 default charset=utf8mb4;
+		) engine=innodb
+		auto_icrement=1
+		default charset=utf8mb4;
 	`
 	db.Exec(usedb)
 	_, err = db.Exec(createTablePhonebook)
@@ -108,11 +111,11 @@ func main() {
 //test contact create and write to DB
 func testContact(db *sql.DB) (sql.Result, error) {
 
-	numberRnd := rand.Int63n(98765432) + int64(9000000000)
+	numberRnd := rand.Int63n(987654320) + int64(7000000000)
 
 	result, err := db.Exec(`insert into phonebook
 												 (firstname, secondname, sinonim, prefix, number, active )
-													values ('Тестовый','пользо', 'ватель', '+7', ?, true)`, numberRnd)
+													values ('Тестовый','пользователь', 'Ник', 'mts', ?, true)`, numberRnd)
 	if err != nil {
 		log.Println("Не удалось созадать запись в бд.")
 	}

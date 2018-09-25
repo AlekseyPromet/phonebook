@@ -19,11 +19,11 @@
     <div class="row" id="app1">
       <div class="col xl3 l3 m3 s3 input-field" v-bind:title="searchMessage">
         <label for="sr"><i class="material-icons circle">search</i></label>
-        <input id="sr" type="text" minlength="5" maxlength="10" placeholder="9876543210" class="search" v-model.trim="searchNumber"
+        <input id="sr" type="text" minlength="5" maxlength="15" placeholder="79876543210" class="search" v-model.trim="searchNumber"
           v-on:keyup.enter="search($event)">
       </div>
       <div class="col" v-if="isSearch">
-        <textarea id="al" cols="3" rows="30">{{ allNumbers }}</textarea>
+        <textarea id="al" cols="3" rows="30" v-model="allNumbers"></textarea>
       </div>
     </div>
     <!-- Форма нового контакта -->
@@ -38,33 +38,31 @@
           <input type="text" id="sn" placeholder="Фамилия" v-model.trim="newContact.secondname">
           <label for="sn">Фамилия</label>
         </div>
-        <div class="input-field col xl2 l2 m3 s3">
+        <div class="input-field col xl1 l1 m4 s4">
           <input type="text" id="si" placeholder="Синоним" v-model.trim="newContact.sinonim">
           <label for="si">Синоним</label>
         </div>
-        <div class="col xl1 l1 m1 s1">
+        <div class="col xl2 l3 m4 s4">
           <select class="browser-default" id="pf" v-model.trim="newContact.prefix">
-            <option value="7" disabled selected>+7</option>
-            <option value="0">0</option>
-            <option value="1">+1</option>
-            <option value="2">+2</option>
-            <option value="3">+3</option>
-            <option value="4">+4</option>
-            <option value="5">+5</option>
-            <option value="6">+6</option>
-            <option value="7">+7</option>
-            <option value="8">+8</option>
-            <option value="9">+9</option>
+            <option value="mts" disabled selected>mts</option>
+            <option value="beeline">beeline</option>
+            <option value="megafon">megafon</option>
+            <option value="mts">mts</option>
+            <option value="rostelecom">rostelecom</option>
+            <option value="tele2">tele2</option>
+            <option value="иное">иное</option>
           </select>
         </div>
         <div class="input-field col">
-          <input type="text" id="nb" class="validate" type="text" minlength="5" maxlength="10" placeholder="9876543210"
+          <input type="text" id="nb" class="validate" type="text" minlength="5" maxlength="15" placeholder="9876543210"
             v-model.number="newContact.number">
           <label for="nb">Номер</label>
         </div>
-        <div class="col xl1 l1 m1 s12">
-          <input type="checkbox" checked="checked" id="ac" v-model="newContact.active">
-          <label for="ac">Активен</label>
+        <div class="col xl1 l1 m1 s1">
+          <label for="ac">
+            <input type="checkbox" class="checkbox" checked="checked" id="ac" v-model="newContact.active">
+            <span>Активен</span>
+          </label>
         </div>
         <button class="btn-floating green waves-effect waves-light right" type="button" v-on:click="createContact">
           <i class="material-icons circle">add</i>
@@ -86,15 +84,19 @@
                 <div class="card-content">
                   <span>{{ index+1 }}</span>
                   <h5 class="car-title">Имя: {{contact.firstname}} {{contact.secondname}}</h5>
-                  <h5>Телефон: {{ contact.prefix }}{{ contact.number }}</h5>
+                  <h5>Телефон: +{{ contact.number }}</h5>
                   <div class="card-action">
+                    <div>Оператор: {{ contact.prefix }}</div>
                     <div>Псевдоним: {{ contact.sinonim }} </div>
-                    <div>Активный: {{ contact.active }}</div>
+                    <label for="">
+                      <input type="checkbox" v-model="contact.active">
+                      <span>Активный</span>
+                    </label>
                   </div>
                 </div>
               </div>
               <div class="right-align">
-                <button class="btn-floating red" v-on:click="deleteContact(index)">
+                <button class="btn-floating red" v-on:click.once="deleteContact(contact.id)">
                   <i class="material-icons circle" aria-hidden="true">delete</i>
                 </button>
               </div>

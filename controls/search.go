@@ -46,29 +46,29 @@ func Search(ctx echo.Context) error {
 		ctx.Logger().Error(err)
 		return err
 	}
-	defer wsc.Close()
 
 	db := initDB(driver, connect)
-	defer db.Close()
-	models.SelectAllNumbers(db, FindeNumbers)
+	go wsSearch(db, wsc, numbers)
 
+	return err
+}
+
+func wsSearch(db *sql.DB, wsc *ws.Conn, numbers []int) {
 	for {
-		numbers = <-FindeNumbers
-		fmt.Printf("Цикл обработки %s", numbers)
+		// Read
+		_, searchNum, err := wsc.ReadMessage()
+		log.Println(searchNum)
+
+		numbers, err = models.SelectAllNumbers(db)
+
+		FindeNumbers <- numbers
 
 		// Write
-		err := wsc.WriteJSON(numbers)
+		err = wsc.WriteJSON(numbers)
 
 		if err != nil {
 			ctx.Logger().Error(err)
 		}
-
-		// Read
-		_, msgByte, err := wsc.ReadMessage()
-
-		if err != nil {
-			ctx.Logger().Error(err)
-		}
-		fmt.Printf("%s\n", msgByte)
+		fmt.Printf("Цикл обработки %v", numbers)
 	}
 }

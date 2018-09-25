@@ -70,7 +70,7 @@ func SelectAll(db *sql.DB) Contacts {
 }
 
 //SelectAllNumbers contact func
-func SelectAllNumbers(db *sql.DB, findeNumber chan []int) ([]int, error) {
+func SelectAllNumbers(db *sql.DB) ([]int, error) {
 	var (
 		num     int
 		numbers []int
@@ -81,29 +81,27 @@ func SelectAllNumbers(db *sql.DB, findeNumber chan []int) ([]int, error) {
 	rows, err := stmt.Query()
 	if err != nil {
 		log.Println(err)
-		return numbers, err
 	}
 
 	for rows.Next() {
 		err = rows.Scan(num)
 		numbers = append(numbers, num)
-		findeNumber <- numbers
 	}
 
+	fmt.Println(numbers)
 	defer stmt.Close()
 	//возвращаем err
 	return numbers, err
 }
 
 //SelectContact for search one contact
-func SelectContact(db *sql.DB, number int, prefix string) (Contact, error) {
+func SelectContact(db *sql.DB, number int) (Contact, error) {
 	var selContact Contact
 
 	rowContact := db.QueryRow(`
 	 select * from phonebook
 	 where Number like = ?
-	 and Prefix like = ?
-	`, number, prefix)
+	`, number)
 
 	err := rowContact.Scan(
 		&selContact.ID,
@@ -125,7 +123,7 @@ func InsertContact(db *sql.DB, cont *Contact) (int64, error) {
 	 values( ?, ?, ?, ?, ?, true);
 	 `
 	//записываем результат в модель
-	row, errExec := db.Exec(
+	result, errExec := db.Exec(
 		insertCont,
 		cont.Firstname,
 		cont.Secondname,
@@ -137,14 +135,13 @@ func InsertContact(db *sql.DB, cont *Contact) (int64, error) {
 	if errExec != nil {
 		fmt.Printf("Не удалось добавить контак %v. Ошибки: %v \n", cont.ID, errExec)
 	}
-	defer db.Close()
-	//возврящаем id записи
-	return row.LastInsertId()
+
+	return result.LastInsertId()
 }
 
 //DeleteByID contact func
 func DeleteByID(db *sql.DB, id int) (int64, error) {
-	delCont := "delet from phonebookdb.phonebook where id = ?"
+	delCont := "delete from phonebookdb.phonebook where id = ?"
 
 	// выполним SQL запрос
 	sql, err := db.Prepare(delCont)

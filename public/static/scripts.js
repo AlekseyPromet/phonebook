@@ -12,7 +12,7 @@ var v1 = new Vue({
     isSearch: false,
   },
   created() {
-    ws.onopen = function(v1) {
+    ws.onopen = function() {
       console.log('Подключаемся к вёбсокету');
     };
   },
@@ -67,7 +67,9 @@ var v2 = new Vue({
   created() {
     this.getData();
   },
-  //Получаем данные при обновлении страницы
+  watch() {
+    this.deleteContact();
+  },
   methods: {
     getData: function() {
       return axios
@@ -81,15 +83,14 @@ var v2 = new Vue({
         });
     },
     //Delete contact from db
-    deleteContact: function(index) {
+    deleteContact: function(id) {
       axios
-        .delete('/delсontact/' + v2.contacts.id)
-        .then(response => {
-          v2.contacts.splice(index, 1);
-          console.log('Контакт id=' + index + ' удалён');
+        .delete('/delсontact/' + id)
+        .then(function(response) {
+          console.log('Контакт id=' + id + ' удалён');
         })
-        .catch(error => {
-          console.log('Не удалось удалить контакт id=' + index);
+        .catch(function(error) {
+          console.log('Не удалось удалить контакт id=' + id);
         });
     },
   },
@@ -111,7 +112,7 @@ var v3 = new Vue({
     //Создать котакт
     createContact: function() {
       //Если
-      if (!v3.newContact.number) {
+      if (!v3.newContact.number || !v3.newContact.fisrtname) {
         console.log('Пустой номер');
         this.$set(v3.newContact.fisrtname, '');
         this.$set(v3.newContact.secondname, '');
@@ -121,7 +122,7 @@ var v3 = new Vue({
           .put('/newсontact', v3.newContact)
           .then(function(response) {
             this.newContact.id = response.created.id;
-            this.contacts.push(v3.newContact);
+            v2.contacts.push(v3.newContact);
             console.log('Контакт создан!');
           })
           .catch(function(error) {

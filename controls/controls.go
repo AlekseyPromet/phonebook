@@ -37,9 +37,9 @@ func GetContact(db *sql.DB) echo.HandlerFunc {
 		)
 
 		fmt.Println(db.Ping())
-		prefix := ctx.Param("prefix")
+
 		number, err := strconv.Atoi(ctx.Param("number"))
-		contact, err = models.SelectContact(db, number, prefix)
+		contact, err = models.SelectContact(db, number)
 
 		if err != nil {
 			ctx.Logger().Error(err)
@@ -108,6 +108,8 @@ func CreateContact(db *sql.DB) echo.HandlerFunc {
 func DeleteContact(db *sql.DB) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		id, _ := strconv.Atoi(ctx.Param("id"))
+		log.Printf("Запрос на удаление контака %d \n", id)
+
 		_, err := models.DeleteByID(db, id)
 
 		if err == nil {
